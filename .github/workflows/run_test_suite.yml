@@ -1,0 +1,81 @@
+name: Run Test Suite
+on:
+  workflow_call:
+    inputs:
+      docker-compose-file:
+        description: Docker compose file to use (e.g. docker-compose.cicd.yml)
+        required: true
+        type: string
+      env-file:
+        description: Environment file used within docker compose
+        required: true
+        type: string
+    secrets:
+      build-aws-access-key-id:
+        description: secrets.BUILD_AWS_ACCESS_KEY_ID
+        required: true
+      build-aws-secret-access-key:
+        description: secrets.BUILD_AWS_SECRET_ACCESS_KEY
+        required: true
+      github-token:
+        description: secrets.BUILD_GITHUB_TOKEN
+        required: true
+      ockers-build-role:
+        description: secrets.OCKERS_BUILD_ROLE
+        required: true
+      postman-api-key:
+        description: secrets.POSTMAN_API_KEY
+        required: true
+      postman-collection-id:
+        description: Postman Collection ID
+        required: true
+      postman-environment-id:
+        description: Postman Environment ID
+        required: true
+jobs:
+  run-test-suite:
+    name: Run Test Suite
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-node@v1
+
+      - name: Install Newman
+        shell: pwsh
+        run: |
+          npm install -g newman
+          npm install -g newman-reporter-htmlextra
+
+      - uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.build-aws-access-key-id }}
+          aws-secret-access-key: ${{ secrets.build-aws-secret-access-key }}
+          aws-region: us-east-1
+          role-to-assume: ${{ secrets.ockers-build-role }}
+
+      - uses: aws-actions/amazon-ecr-login@v1
+        id: ecr
+
+      - name: docker compose up
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ secrets.github-token }}
+          GITHUB_USERNAME: foo
+        run: docker compose --env-file ${{ inputs.env-file }} -f ${{ inputs.docker-compose-file }} up -d --quiet-pull
+
+      - name: Run Collection
+        shell: pwsh
+        run: |
+          New-Item -Type Directory artifacts
+          newman run https://api.getpostman.com/collections/${{ secrets.postman-collection-id }}?apikey=${{ secrets.postman-api-key }} `
+          --folder "CICD/Github" `
+          -e https://api.getpostman.com/environments/${{ secrets.postman-environment-id }}?apikey=${{ secrets.postman-api-key }} `
+          -r htmlextra `
+          --reporter-htmlextra-export artifacts/report.html
+
+      - uses: actions/upload-artifact@v2
+        if: always()
+        with:
+          name: tests
+          path: artifacts
