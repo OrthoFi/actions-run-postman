@@ -46,6 +46,7 @@ jobs:
         run: |
           npm install -g newman
           npm install -g newman-reporter-htmlextra
+          npm install -g newman-reporter-json-summary
 
       - uses: aws-actions/configure-aws-credentials@v1
         with:
@@ -71,11 +72,19 @@ jobs:
           newman run https://api.getpostman.com/collections/${{ secrets.postman-collection-id }}?apikey=${{ secrets.postman-api-key }} `
           --folder "CICD/Github" `
           -e https://api.getpostman.com/environments/${{ secrets.postman-environment-id }}?apikey=${{ secrets.postman-api-key }} `
-          -r htmlextra `
+          -r htmlextra,json-summary `
           --reporter-htmlextra-export artifacts/report.html
+          --reporter-summary-json-export artifacts/summary.json
+
+      - name: Report Failure Count
+        if: failure()
+        shell: pwsh
+        run: |
+          $failurecount = (Get-Content 'artifacts\summary.json' | Out-String | ConvertFrom-Json).Run.Stats.Assertions.failed
+          echo "::warning title=Postman Tests Failed::$failurecount tests failed. See 'Postman Test Results' artifact for details."
 
       - uses: actions/upload-artifact@v2
         if: always()
         with:
-          name: tests
+          name: Postman Test Results
           path: artifacts
