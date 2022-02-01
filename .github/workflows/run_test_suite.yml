@@ -73,7 +73,7 @@ jobs:
           --folder "CICD/Github" `
           -e https://api.getpostman.com/environments/${{ secrets.postman-environment-id }}?apikey=${{ secrets.postman-api-key }} `
           -r htmlextra,json-summary `
-          --reporter-htmlextra-export artifacts/report.html
+          --reporter-htmlextra-export artifacts/report.html `
           --reporter-summary-json-export artifacts/summary.json
 
       - name: Report Failure Count
