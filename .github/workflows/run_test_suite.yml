@@ -63,7 +63,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.github-token }}
           GITHUB_USERNAME: foo
-        run: docker compose --env-file ${{ inputs.env-file }} -f ${{ inputs.docker-compose-file }} up -d --quiet-pull
+        run: docker compose --env-file ${{ inputs.env-file }} -f ${{ inputs.docker-compose-file }} --log-level ERROR up -d --quiet-pull
 
       - name: Run Collection
         shell: pwsh
