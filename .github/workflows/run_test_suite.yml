@@ -83,7 +83,7 @@ jobs:
           $summary = Get-Content 'artifacts\summary.json' | Out-String | ConvertFrom-Json
           $failurecount = $summary.Run.Stats.Assertions.failed
           $tests = ""
-          foreach ($f in $summary.Run.Failures) { $tests = "$tests`r`n - $($f.Source.Name): $($f.Error.Test)" }
+          foreach ($f in $summary.Run.Failures) { $tests = "$tests%0A - $($f.Source.Name): $($f.Error.Test)" }
           echo "::warning title=Postman Tests Failed::$failurecount tests failed. See 'Postman Test Results' artifact for details. Failed tests: $tests"
 
       - uses: actions/upload-artifact@v2
