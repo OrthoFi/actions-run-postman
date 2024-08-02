@@ -35,13 +35,13 @@ on:
 jobs:
   run-test-suite:
     name: Run Test Suite
-    runs-on: ubuntu-latest
+    runs-on: ['self-hosted','linux','x64']
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
         with:
-          node-version: "16"
+          node-version: "18"
 
       - name: Install Newman
         shell: pwsh
@@ -50,14 +50,14 @@ jobs:
           npm install -g newman-reporter-htmlextra
           npm install -g newman-reporter-json-summary
 
-      - uses: aws-actions/configure-aws-credentials@v1
+      - uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.build-aws-access-key-id }}
           aws-secret-access-key: ${{ secrets.build-aws-secret-access-key }}
           aws-region: us-east-1
           role-to-assume: ${{ secrets.ockers-build-role }}
 
-      - uses: aws-actions/amazon-ecr-login@v1
+      - uses: aws-actions/amazon-ecr-login@v2
         id: ecr
 
       - name: docker compose up
@@ -88,7 +88,7 @@ jobs:
           foreach ($f in $summary.Run.Failures) { $tests = "$tests%0A - $($f.Source.Name): $($f.Error.Test)" }
           echo "::warning title=Postman Tests Failed::$failurecount tests failed. See 'Postman Test Results' artifact for details. Failed tests: $tests"
 
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: Postman Test Results
