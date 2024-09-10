@@ -60,6 +60,19 @@ jobs:
       - uses: aws-actions/amazon-ecr-login@v2
         id: ecr
 
+      - name: Docker Prep
+        shell: pwsh
+        run: |
+          Write-Host "Finding and stopping containers using port 1433, to avoid any conflicts..."
+          $container_id = $(docker ps --filter "publish=1433" --format "{{.ID}}")
+          if (-not [string]::IsNullOrEmpty($container_id)) {
+            Write-Host "Stopping and removing container blocking port 1433..."
+            docker stop $container_id | Out-Null
+            docker rm $container_id | Out-Null
+          } else {
+            Write-Host "No containers blocking port 1433."
+          }
+
       - name: docker compose up
         shell: pwsh
         env:
